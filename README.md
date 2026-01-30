@@ -47,22 +47,16 @@ JSON-formatted logs via `structlog` for production observability.
 
 ```
 src/paranoid_ai/
-├── api.py              # FastAPI application & endpoints
-├── config.py           # Pydantic settings management
-├── models.py           # Request/response models
-├── service.py          # Orchestration layer
+├── api.py              # FastAPI endpoints
+├── api_models.py       # Pydantic settings & models
+├── service.py          # Orchestration + paranoid validation
+├── llm_provider.py     # Anthropic Claude integration
 ├── counties.py         # Census Bureau FIPS lookup
 ├── tax_rates.py        # FIPS → tax rate mapping
-├── templates.py        # HTML templates
-├── validation/
-│   ├── __init__.py
-│   └── validator.py    # Paranoid validation logic
-└── llm/
-    ├── __init__.py
-    ├── base.py         # Abstract LLM provider
-    ├── anthropic.py    # Anthropic Claude implementation
-    └── prompts.py      # Prompt templates
+└── index.html          # Web UI template
 ```
+
+**7 files. No subfolders. KISS.**
 
 ## 🚀 Quick Start
 
@@ -91,8 +85,6 @@ Create a `.env` file:
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-...
-LLM_PROVIDER=anthropic
-LOG_LEVEL=INFO
 ```
 
 ### Running the Server
@@ -112,11 +104,11 @@ Visit `http://127.0.0.1:8000` for the interactive UI, or `http://127.0.0.1:8000/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/` | Interactive web UI |
+| `GET` | `/health` | Health check |
 | `POST` | `/api/v1/clean` | Process OCR text |
-| `GET` | `/api/v1/health` | Health check |
 | `POST` | `/api/v1/counties/load` | Load Census data |
 | `GET` | `/api/v1/counties/status` | County data status |
-| `GET` | `/api/v1/counties/lookup` | Manual FIPS lookup |
+| `POST` | `/api/v1/counties/lookup` | Manual FIPS lookup |
 
 ## 🧪 Validation Examples
 
@@ -155,12 +147,12 @@ and fuzzy matching (80% threshold)."
 | `fastapi` | Web framework |
 | `uvicorn` | ASGI server |
 | `pydantic` | Data validation |
-| `anthropic` | LLM provider |
+| `pydantic-settings` | Environment config |
+| `anthropic` | Claude LLM |
 | `httpx` | Async HTTP client |
 | `structlog` | Structured logging |
 | `text2num` | Text-to-number parsing |
 | `rapidfuzz` | Fuzzy string matching |
-| `python-dotenv` | Environment management |
 
 ## 📄 License
 
