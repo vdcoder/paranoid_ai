@@ -56,8 +56,6 @@ src/paranoid_ai/
 └── index.html          # Web UI template
 ```
 
-**7 files. No subfolders. KISS.**
-
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -90,11 +88,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 ### Running the Server
 
 ```bash
-# Start the API server
 python -m uvicorn paranoid_ai.api:app --host 127.0.0.1 --port 8000
-
-# Load Census county data (required for validation)
-curl -X POST http://127.0.0.1:8000/api/v1/counties/load
 ```
 
 Visit `http://127.0.0.1:8000` for the interactive UI, or `http://127.0.0.1:8000/docs` for OpenAPI documentation.
