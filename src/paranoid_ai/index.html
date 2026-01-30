@@ -1,6 +1,3 @@
-"""Static HTML template for the Paranoid AI home page."""
-
-HOME_PAGE_HTML = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -416,7 +413,7 @@ HOME_PAGE_HTML = """
             <div class="logo">
                 <span class="logo-icon">👁️</span> Paranoid AI
             </div>
-            <p class="tagline">Trust no OCR. Verify everything. Sleep well.</p>
+            <p class="tagline">Trust no OCR. Verify everything with AI + Code. Sleep well.</p>
             
             <nav class="nav-links">
                 <a href="/docs" class="nav-link">
@@ -436,11 +433,11 @@ HOME_PAGE_HTML = """
             <div class="stats-bar" id="stats-bar">
                 <div class="stat">
                     <div class="stat-value" id="stat-counties">--</div>
-                    <div class="stat-label">Counties</div>
+                    <div class="stat-label">County Names Map*</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value" id="stat-states">--</div>
-                    <div class="stat-label">States</div>
+                    <div class="stat-label">State Names Map*</div>
                 </div>
                 <div class="stat">
                     <div class="stat-value" id="stat-provider">--</div>
@@ -457,34 +454,25 @@ HOME_PAGE_HTML = """
                 </div>
                 
                 <div class="preset-label">
-                    <span>🧪</span> Load Test Sample:
+                    Load Test Sample:
                 </div>
                 <select class="preset-select" id="preset-select" onchange="loadPreset()">
                     <option value="">-- Select a test case --</option>
                     <option value="valid">✅ Valid Document (Santa Clara, CA)</option>
+                    <option value="ocr_abbrev">✅ OCR Abbreviations (S. Clara, Ft. Bend)</option>
+                    <option value="texas">✅ Texas Document (Harris County)</option>
+                    <option value="louisiana">✅ Louisiana Parish (Orleans)</option>
+                    <option value="messy">✅ Messy OCR Survival (Lots of Noise)</option>
                     <option value="amount_mismatch">🚨 Amount Mismatch Error</option>
                     <option value="date_error">🚨 Date Logic Error (Recorded before Signed)</option>
-                    <option value="multi_error">💀 Multiple Errors (Amount + Date)</option>
-                    <option value="ocr_abbrev">🔤 OCR Abbreviations (S. Clara, Ft. Bend)</option>
-                    <option value="texas">🤠 Texas Document (Harris County)</option>
-                    <option value="louisiana">⚜️ Louisiana Parish (Orleans)</option>
-                    <option value="messy">😵 Messy OCR (Lots of Noise)</option>
+                    <option value="multi_error">🚨 Multiple Errors (Amount + Date)</option>
+                    <option value="unknown_county">🚨 Unknown County Error</option>
                 </select>
                 
-                <textarea id="ocr-input" placeholder="*** RECORDING REQ ***
-Doc: DEED-TRUST-0042
-County: S. Clara | State: CA
-Date Signed: 2024-01-15
-Date Recorded: 2024-01-20
-Grantor: T.E.S.L.A. Holdings LLC
-Grantee: John & Sarah Connor
-Amount: $1,250,000.00 (One Million Two Hundred Fifty Thousand Dollars)
-APN: 992-001-XA
-Status: PRELIMINARY
-*** END ***"></textarea>
+                <textarea id="ocr-input" placeholder="Select a test case or paste your own OCR block"></textarea>
                 <button class="panic-btn" id="panic-btn" onclick="runPanic()">
                     <span class="spinner"></span>
-                    🚨 PANIC!
+                    +AI -PANIC
                 </button>
             </div>
             
@@ -496,7 +484,7 @@ Status: PRELIMINARY
                 <div class="results-content" id="results">
                     <div class="results-placeholder">
                         <div class="icon">👁️</div>
-                        <div>Paste your OCR text and hit PANIC!</div>
+                        <div>Paste your OCR text and hit "+AI -PANIC"</div>
                         <div style="margin-top: 0.5rem; font-size: 0.8rem;">
                             We'll clean it, enrich it, and validate it paranoid-style.
                         </div>
@@ -537,7 +525,9 @@ Amount: $850,000.00 (Eight Hundred Thousand Dollars)
 APN: 123-456-AB
 Status: FINAL
 *** END ***
-Note: Amount says $850K but text says $800K - MISMATCH!`,
+
+Delete This Note: 
+Amount says $850K but text says $800K - MISMATCH!`,
 
             date_error: `*** RECORDING REQ ***
 Doc: MORTGAGE-2024-001
@@ -550,7 +540,9 @@ Amount: $2,500,000.00 (Two Million Five Hundred Thousand Dollars)
 APN: TX-445-992
 Status: RECORDED
 *** END ***
-Note: Recorded BEFORE signed - impossible!`,
+
+Delete This Note: 
+Recorded BEFORE signed - impossible!`,
 
             multi_error: `*** RECORDING REQ ***
 Doc: DEED-2024-666
@@ -563,7 +555,9 @@ Amount: $1,250,000.00 (One Million Two Hundred Thousand Dollars)
 APN: 666-999-XX
 Status: SUSPICIOUS
 *** END ***
-Note: Date error AND amount mismatch!`,
+
+Delete This Note: 
+Date error AND amount mismatch!`,
 
             ocr_abbrev: `*** RECORDING REQ ***
 Doc: TRUST-DEED-0077
@@ -576,7 +570,21 @@ Amount: $3,750,000.00 (Three Million Seven Hundred Fifty Thousand Dollars)
 APN: 777-888-SC
 Status: FINAL
 *** END ***
-Note: Has OCR abbreviations - S. Clara, St. Francis, Ft. Worth`,
+
+Delete This Note: 
+Has OCR abbreviations - S. Clara, St. Francis, Ft. Worth`,
+
+            unknown_county: `*** RECORDING REQ ***
+Doc: TRUST-DEED-0077
+County: North Pole | State: CA  
+Date Signed: 2024-05-01
+Date Recorded: 2024-05-05
+Grantor: St. Francis Medical Grp
+Grantee: Ft. Worth Investments
+Amount: $3,750,000.00 (Three Million Seven Hundred Fifty Thousand Dollars)
+APN: 777-888-SC
+Status: FINAL
+*** END ***`,
 
             texas: `*** RECORDING REQ ***
 Doc: WARRANTY-DEED-TX-2024
@@ -601,7 +609,9 @@ Amount: $875,000.00 (Eight Hundred Seventy Five Thousand Dollars)
 APN: LA-ORL-55443
 Status: FINAL
 *** END ***
-Note: Louisiana uses "Parish" not "County"`,
+
+Delete This Note: 
+Louisiana uses "Parish" not "County"`,
 
             messy: `***R3CORDING REQ***
 D0c: DEED-TRVST-O042
@@ -614,7 +624,9 @@ Am0unt: $l,250,OOO.00 (0ne Mill1on Two Hundred F1fty Thousand D0llars)
 APN: 992-OO1-XA
 Status: PREL1MINARY
 *** END ***
-Note: Messy OCR with lots of character substitutions (0/O, 1/l, etc.)`
+
+Delete This Note: 
+Messy OCR with lots of character substitutions (0/O, 1/l, etc.). The level of tolerance can be measured and limited in future versions, even in high confidence situations.`
         };
         
         function loadPreset() {
@@ -779,4 +791,3 @@ Note: Messy OCR with lots of character substitutions (0/O, 1/l, etc.)`
     </script>
 </body>
 </html>
-"""

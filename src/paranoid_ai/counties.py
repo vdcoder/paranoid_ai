@@ -10,22 +10,16 @@ import httpx
 import structlog
 from rapidfuzz import fuzz, process
 
-from paranoid_ai.config import get_settings
+from paranoid_ai.api_models import get_settings
 
 logger = structlog.get_logger()
 
-# Default Census Bureau URL for county data
-DEFAULT_COUNTY_DATA_URL = (
-    "https://www2.census.gov/geo/docs/reference/codes2020/national_county2020.txt"
-)
+# Can be set via API, with default
+_modifiable_census_url: str = "https://www2.census.gov/geo/docs/reference/codes2020/national_county2020.txt"
 
-# Module-level URL override (can be set via API)
-_custom_url: str | None = None
-
-# Fuzzy matching threshold (0-100) - minimum score to accept a match
+# Fuzzy matching threshold (0-100) - minimum score to accept a county name match
 # 80% is lenient enough to catch OCR typos but strict enough to avoid false positives
 FUZZY_MATCH_THRESHOLD = 80
-
 
 class CountyLookup:
     """
@@ -37,10 +31,9 @@ class CountyLookup:
 
     def __init__(self):
         """Initialize empty county lookup. Call load() to fetch data."""
-        self._data: dict[str, dict[str, str]] = {}  # {state: {county_name: fips}}
+        self._states: dict[str, dict[str, str]] = {}  # {state: {county_name: fips}}
         self._variations: dict[str, dict[str, str]] = {}  # {state: {variation: canonical}}
         self._loaded = False
-        self._source_url: str | None = None
 
     @property
     def is_loaded(self) -> bool:
@@ -48,16 +41,11 @@ class CountyLookup:
         return self._loaded
 
     @property
-    def source_url(self) -> str | None:
-        """Get the URL from which data was loaded."""
-        return self._source_url
-
-    @property
     def county_count(self) -> int:
         """Get total number of counties loaded."""
-        return sum(len(counties) for counties in self._data.values())
+        return sum(len(counties) for counties in self._states.values())
 
-    async def load(self, url: str | None = None) -> dict[str, Any]:
+    async def load(self) -> dict[str, Any]:
         """
         Load county data from Census Bureau or custom URL.
         
@@ -66,44 +54,41 @@ class CountyLookup:
             
         Returns:
             dict with load statistics
-        """
-        url = url or _custom_url or DEFAULT_COUNTY_DATA_URL
-        self._source_url = url
-        
-        logger.info("loading_county_data", url=url)
+        """       
+        logger.info("loading_county_states", url=_modifiable_census_url)
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(url)
+                response = await client.get(_modifiable_census_url)
                 response.raise_for_status()
                 
             content = response.text
-            self._parse_census_data(content)
+            self._parse_census_states(content)
             self._build_variations()
             self._loaded = True
             
             stats = {
                 "success": True,
-                "source_url": url,
-                "states_loaded": len(self._data),
+                "source_url": _modifiable_census_url,
+                "states_loaded": len(self._states),
                 "counties_loaded": self.county_count,
             }
             
-            logger.info("county_data_loaded", **stats)
+            logger.info("county_states_loaded", **stats)
             return stats
             
         except Exception as e:
-            logger.error("county_data_load_failed", url=url, error=str(e))
+            logger.error("county_states_load_failed", url=_modifiable_census_url, error=str(e))
             raise
 
-    def _parse_census_data(self, content: str) -> None:
+    def _parse_census_states(self, content: str) -> None:
         """
         Parse Census Bureau pipe-delimited county data.
         
         Format: STATE|STATEFP|COUNTYFP|COUNTYNS|COUNTYNAME|CLASSFP|FUNCSTAT
         Example: AL|01|001|00161526|Autauga County|H1|A
         """
-        self._data.clear()
+        self._states.clear()
         
         reader = csv.DictReader(StringIO(content), delimiter="|")
         
@@ -122,19 +107,16 @@ class CountyLookup:
             # Normalize county name (remove "County", "Parish", etc.)
             canonical_name = self._normalize_county_name(county_name)
             
-            if state not in self._data:
-                self._data[state] = {}
+            if state not in self._states:
+                self._states[state] = {}
             
             # Store both original and normalized names
-            self._data[state][canonical_name] = fips
-            self._data[state][county_name] = fips  # Keep original too
+            self._states[state][canonical_name] = fips
+            self._states[state][county_name] = fips  # Keep original too
 
     def _normalize_county_name(self, name: str) -> str:
         """
         Normalize county name by removing common suffixes.
-        
-        "Santa Clara County" -> "Santa Clara"
-        "Orleans Parish" -> "Orleans"
         """
         # Common suffixes to remove
         suffixes = [
@@ -143,7 +125,7 @@ class CountyLookup:
             r"\s+Borough$",
             r"\s+Census Area$",
             r"\s+Municipality$",
-            r"\s+city$",  # Virginia independent cities
+            r"\s+City$",  # Virginia independent cities
         ]
         
         result = name
@@ -155,11 +137,6 @@ class CountyLookup:
     def _build_variations(self) -> None:
         """
         Build common variations/abbreviations for county names.
-        
-        This helps match OCR errors and abbreviations:
-        - "S. Clara" -> "Santa Clara"
-        - "St. Louis" -> "Saint Louis"
-        - "Ft. Worth" -> "Fort Worth"
         """
         self._variations.clear()
         
@@ -176,7 +153,7 @@ class CountyLookup:
             "Los": ["L."],
         }
         
-        for state, counties in self._data.items():
+        for state, counties in self._states.items():
             if state not in self._variations:
                 self._variations[state] = {}
             
@@ -186,9 +163,10 @@ class CountyLookup:
                 
                 # Generate abbreviation variations
                 for full_word, abbrevs in abbreviation_map.items():
-                    if full_word in county_name:
+                    full_word_pattern = r'\b' + re.escape(full_word) + r'\b'
+                    if re.search(full_word_pattern, county_name):
                         for abbrev in abbrevs:
-                            variation = county_name.replace(full_word, abbrev)
+                            variation = re.sub(full_word_pattern, abbrev, county_name)
                             self._variations[state][variation.lower()] = county_name
 
     def lookup(self, state: str, county: str) -> str | None:
@@ -208,24 +186,24 @@ class CountyLookup:
         
         state = state.upper().strip()
         
-        if state not in self._data:
+        if state not in self._states:
             return None
         
         # Try exact match first
-        if county in self._data[state]:
-            return self._data[state][county]
+        if county in self._states[state]:
+            return self._states[state][county]
         
         # Try normalized version
         normalized = self._normalize_county_name(county)
-        if normalized in self._data[state]:
-            return self._data[state][normalized]
+        if normalized in self._states[state]:
+            return self._states[state][normalized]
         
         # Try variations
         if state in self._variations:
             county_lower = county.lower()
             if county_lower in self._variations[state]:
                 canonical = self._variations[state][county_lower]
-                return self._data[state].get(canonical)
+                return self._states[state].get(canonical)
         
         return None
 
@@ -264,7 +242,7 @@ class CountyLookup:
         
         state = state.upper().strip()
         
-        if state not in self._data:
+        if state not in self._states:
             result["match_type"] = "state_not_found"
             return result
         
@@ -427,11 +405,11 @@ class CountyLookup:
         Uses rapidfuzz for fast Levenshtein-based matching.
         Only returns a match if score >= FUZZY_MATCH_THRESHOLD.
         """
-        if state not in self._data:
+        if state not in self._states:
             return None
         
         # Get all county names for this state
-        county_names = list(self._data[state].keys())
+        county_names = list(self._states[state].keys())
         
         if not county_names:
             return None
@@ -447,7 +425,7 @@ class CountyLookup:
         
         if best_match:
             matched_name, score, _ = best_match
-            fips = self._data[state].get(matched_name)
+            fips = self._states[state].get(matched_name)
             
             logger.debug("fuzzy_match_found", 
                         query=county, matched=matched_name, 
@@ -468,25 +446,25 @@ class CountyLookup:
     def get_all_counties_for_state(self, state: str) -> list[str]:
         """Get all county names for a state (for AI context)."""
         state = state.upper().strip()
-        if state not in self._data:
+        if state not in self._states:
             return []
         
         # Return unique normalized names
         return sorted(set(
             self._normalize_county_name(name) 
-            for name in self._data[state].keys()
+            for name in self._states[state].keys()
         ))
 
     def get_stats(self) -> dict[str, Any]:
         """Get statistics about loaded data."""
         return {
             "loaded": self._loaded,
-            "source_url": self._source_url,
-            "states": len(self._data),
+            "source_url": _modifiable_census_url,
+            "states": len(self._states),
             "counties": self.county_count,
             "counties_by_state": {
                 state: len(counties) 
-                for state, counties in sorted(self._data.items())
+                for state, counties in sorted(self._states.items())
             } if self._loaded else {},
         }
 
@@ -509,11 +487,11 @@ def set_county_data_url(url: str) -> None:
     
     This will be used on next load() call.
     """
-    global _custom_url
-    _custom_url = url
+    global _modifiable_census_url
+    _modifiable_census_url = url
     logger.info("county_data_url_set", url=url)
 
 
 def get_county_data_url() -> str:
     """Get the current county data URL (custom or default)."""
-    return _custom_url or DEFAULT_COUNTY_DATA_URL
+    return _modifiable_census_url
