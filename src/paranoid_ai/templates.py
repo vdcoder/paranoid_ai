@@ -1,0 +1,782 @@
+"""Static HTML template for the Paranoid AI home page."""
+
+HOME_PAGE_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paranoid AI - OCR Validation</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --accent: #00ff88;
+            --accent-dim: #00cc6a;
+            --danger: #ff4757;
+            --warning: #ffa502;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --border: #2a2a3a;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Header */
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 3rem;
+        }
+        
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent) 0%, #00ccff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .logo-icon {
+            display: inline-block;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Navigation Links */
+        .nav-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .nav-link:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(0, 255, 136, 0.1);
+        }
+        
+        .nav-link .icon {
+            margin-right: 0.5rem;
+        }
+        
+        /* Main Content */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        /* Input Section */
+        .input-section textarea {
+            width: 100%;
+            min-height: 300px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+        
+        .input-section textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .input-section textarea::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        /* Panic Button */
+        .panic-btn {
+            width: 100%;
+            padding: 1rem 2rem;
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--danger) 0%, #ff6b7a 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .panic-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 71, 87, 0.4);
+        }
+        
+        .panic-btn:active {
+            transform: translateY(0);
+        }
+        
+        .panic-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .panic-btn .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+        
+        .panic-btn.loading .spinner {
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Results Section */
+        .results-section {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .results-content {
+            flex: 1;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 300px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            overflow: auto;
+        }
+        
+        .results-placeholder {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .results-placeholder .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Result Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .badge-valid {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+        
+        .badge-invalid {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .result-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .result-section-title {
+            color: var(--accent);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .result-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .result-field:last-child {
+            border-bottom: none;
+        }
+        
+        .field-key {
+            color: var(--text-secondary);
+        }
+        
+        .field-value {
+            color: var(--text-primary);
+            text-align: right;
+        }
+        
+        .error-item {
+            background: rgba(255, 71, 87, 0.1);
+            border-left: 3px solid var(--danger);
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.8rem;
+        }
+        
+        .warning-item {
+            background: rgba(255, 165, 2, 0.1);
+            border-left: 3px solid var(--warning);
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.8rem;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            margin-top: 3rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        
+        .author {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .author-name {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        
+        .version {
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Preset Dropdown */
+        .preset-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300ff88' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+        }
+        
+        .preset-select:hover, .preset-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .preset-select option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 0.5rem;
+        }
+        
+        .preset-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="logo-icon">👁️</span> Paranoid AI
+            </div>
+            <p class="tagline">Trust no OCR. Verify everything. Sleep well.</p>
+            
+            <nav class="nav-links">
+                <a href="/docs" class="nav-link">
+                    <span class="icon">📚</span> API Docs
+                </a>
+                <a href="/openapi.json" class="nav-link">
+                    <span class="icon">📋</span> OpenAPI Spec
+                </a>
+                <a href="/health" class="nav-link">
+                    <span class="icon">💚</span> Health Check
+                </a>
+                <a href="/api/v1/counties/status" class="nav-link">
+                    <span class="icon">🗺️</span> County Data
+                </a>
+            </nav>
+            
+            <div class="stats-bar" id="stats-bar">
+                <div class="stat">
+                    <div class="stat-value" id="stat-counties">--</div>
+                    <div class="stat-label">Counties</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="stat-states">--</div>
+                    <div class="stat-label">States</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="stat-provider">--</div>
+                    <div class="stat-label">LLM Provider</div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main-grid">
+            <div class="card input-section">
+                <div class="card-header">
+                    <span>📝</span>
+                    <span class="card-title">OCR Text Input</span>
+                </div>
+                
+                <div class="preset-label">
+                    <span>🧪</span> Load Test Sample:
+                </div>
+                <select class="preset-select" id="preset-select" onchange="loadPreset()">
+                    <option value="">-- Select a test case --</option>
+                    <option value="valid">✅ Valid Document (Santa Clara, CA)</option>
+                    <option value="amount_mismatch">🚨 Amount Mismatch Error</option>
+                    <option value="date_error">🚨 Date Logic Error (Recorded before Signed)</option>
+                    <option value="multi_error">💀 Multiple Errors (Amount + Date)</option>
+                    <option value="ocr_abbrev">🔤 OCR Abbreviations (S. Clara, Ft. Bend)</option>
+                    <option value="texas">🤠 Texas Document (Harris County)</option>
+                    <option value="louisiana">⚜️ Louisiana Parish (Orleans)</option>
+                    <option value="messy">😵 Messy OCR (Lots of Noise)</option>
+                </select>
+                
+                <textarea id="ocr-input" placeholder="*** RECORDING REQ ***
+Doc: DEED-TRUST-0042
+County: S. Clara | State: CA
+Date Signed: 2024-01-15
+Date Recorded: 2024-01-20
+Grantor: T.E.S.L.A. Holdings LLC
+Grantee: John & Sarah Connor
+Amount: $1,250,000.00 (One Million Two Hundred Fifty Thousand Dollars)
+APN: 992-001-XA
+Status: PRELIMINARY
+*** END ***"></textarea>
+                <button class="panic-btn" id="panic-btn" onclick="runPanic()">
+                    <span class="spinner"></span>
+                    🚨 PANIC!
+                </button>
+            </div>
+            
+            <div class="card results-section">
+                <div class="card-header">
+                    <span>🔍</span>
+                    <span class="card-title">Validation Results</span>
+                </div>
+                <div class="results-content" id="results">
+                    <div class="results-placeholder">
+                        <div class="icon">👁️</div>
+                        <div>Paste your OCR text and hit PANIC!</div>
+                        <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+                            We'll clean it, enrich it, and validate it paranoid-style.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p class="author">Crafted with paranoia by <span class="author-name">Victor Diaz</span></p>
+            <p class="version">Paranoid AI v{{ version }} • Powered by {{ provider }}</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Test case presets
+        const PRESETS = {
+            valid: `*** RECORDING REQ ***
+Doc: DEED-TRUST-0042
+County: Santa Clara | State: CA
+Date Signed: 2024-01-15
+Date Recorded: 2024-01-20
+Grantor: Acme Holdings LLC
+Grantee: John & Sarah Connor
+Amount: $1,250,000.00 (One Million Two Hundred Fifty Thousand Dollars)
+APN: 992-001-XA
+Status: FINAL
+*** END ***`,
+
+            amount_mismatch: `*** RECORDING REQ ***
+Doc: DEED-TRUST-0099
+County: Santa Clara | State: CA
+Date Signed: 2024-02-10
+Date Recorded: 2024-02-15
+Grantor: BigCorp Industries
+Grantee: Jane Smith
+Amount: $850,000.00 (Eight Hundred Thousand Dollars)
+APN: 123-456-AB
+Status: FINAL
+*** END ***
+Note: Amount says $850K but text says $800K - MISMATCH!`,
+
+            date_error: `*** RECORDING REQ ***
+Doc: MORTGAGE-2024-001
+County: Harris | State: TX
+Date Signed: 2024-03-20
+Date Recorded: 2024-03-15
+Grantor: Texas Energy Corp
+Grantee: Houston First Bank
+Amount: $2,500,000.00 (Two Million Five Hundred Thousand Dollars)
+APN: TX-445-992
+Status: RECORDED
+*** END ***
+Note: Recorded BEFORE signed - impossible!`,
+
+            multi_error: `*** RECORDING REQ ***
+Doc: DEED-2024-666
+County: S. Clara | State: CA
+Date Signed: 2024-01-15
+Date Recorded: 2024-01-10
+Grantor: Shady Dealers Inc
+Grantee: Unsuspecting Buyer
+Amount: $1,250,000.00 (One Million Two Hundred Thousand Dollars)
+APN: 666-999-XX
+Status: SUSPICIOUS
+*** END ***
+Note: Date error AND amount mismatch!`,
+
+            ocr_abbrev: `*** RECORDING REQ ***
+Doc: TRUST-DEED-0077
+County: S. Clara | State: CA  
+Date Signed: 2024-05-01
+Date Recorded: 2024-05-05
+Grantor: St. Francis Medical Grp
+Grantee: Ft. Worth Investments
+Amount: $3,750,000.00 (Three Million Seven Hundred Fifty Thousand Dollars)
+APN: 777-888-SC
+Status: FINAL
+*** END ***
+Note: Has OCR abbreviations - S. Clara, St. Francis, Ft. Worth`,
+
+            texas: `*** RECORDING REQ ***
+Doc: WARRANTY-DEED-TX-2024
+County: Harris | State: TX
+Date Signed: 2024-04-10
+Date Recorded: 2024-04-12
+Grantor: Lone Star Properties LLC
+Grantee: Houston Metropolitan Bank
+Amount: $5,000,000.00 (Five Million Dollars)
+APN: TX-HARRIS-99001
+Status: RECORDED
+*** END ***`,
+
+            louisiana: `*** RECORDING REQ ***
+Doc: ACT-OF-SALE-LA-2024
+County: Orleans Parish | State: LA
+Date Signed: 2024-06-15
+Date Recorded: 2024-06-18
+Grantor: Crescent City Holdings
+Grantee: NOLA First Credit Union
+Amount: $875,000.00 (Eight Hundred Seventy Five Thousand Dollars)
+APN: LA-ORL-55443
+Status: FINAL
+*** END ***
+Note: Louisiana uses "Parish" not "County"`,
+
+            messy: `***R3CORDING REQ***
+D0c: DEED-TRVST-O042
+C0unty: S. C1ara | St8te: CA
+Dat3 Sign3d: 2O24-01-15
+Date Record3d: 2024-01-20
+Grant0r: T.E.S.L.A. H0ldings LLC
+Grantee: J0hn & Sarah C0nnor
+Am0unt: $l,250,OOO.00 (0ne Mill1on Two Hundred F1fty Thousand D0llars)
+APN: 992-OO1-XA
+Status: PREL1MINARY
+*** END ***
+Note: Messy OCR with lots of character substitutions (0/O, 1/l, etc.)`
+        };
+        
+        function loadPreset() {
+            const select = document.getElementById('preset-select');
+            const textarea = document.getElementById('ocr-input');
+            const preset = select.value;
+            
+            if (preset && PRESETS[preset]) {
+                textarea.value = PRESETS[preset];
+                textarea.focus();
+            }
+        }
+        
+        // Load stats on page load
+        async function loadStats() {
+            try {
+                const [health, counties] = await Promise.all([
+                    fetch('/health').then(r => r.json()),
+                    fetch('/api/v1/counties/status').then(r => r.json())
+                ]);
+                
+                document.getElementById('stat-provider').textContent = health.llm_provider.toUpperCase();
+                document.getElementById('stat-counties').textContent = counties.counties || '0';
+                document.getElementById('stat-states').textContent = counties.states || '0';
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
+        
+        async function runPanic() {
+            const btn = document.getElementById('panic-btn');
+            const input = document.getElementById('ocr-input');
+            const results = document.getElementById('results');
+            
+            const text = input.value.trim();
+            if (!text) {
+                alert('Please enter some OCR text first!');
+                return;
+            }
+            
+            btn.classList.add('loading');
+            btn.disabled = true;
+            results.innerHTML = '<div class="results-placeholder"><div class="spinner" style="display:inline-block;width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;"></div><div style="margin-top:1rem;">Running paranoid validation...</div></div>';
+            
+            try {
+                const response = await fetch('/api/v1/clean', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ raw_text: text })
+                });
+                
+                const data = await response.json();
+                displayResults(data);
+            } catch (error) {
+                results.innerHTML = `<div class="error-item">Error: ${error.message}</div>`;
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+        
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            const isValid = data.validation.is_valid;
+            
+            let html = `
+                <div style="margin-bottom: 1rem;">
+                    <span class="badge ${isValid ? 'badge-valid' : 'badge-invalid'}">
+                        ${isValid ? '✓ VALID' : '✗ INVALID'}
+                    </span>
+                    <span style="margin-left: 1rem; color: var(--text-secondary); font-size: 0.8rem;">
+                        ${data.processing_time_ms.toFixed(0)}ms
+                    </span>
+                </div>
+            `;
+            
+            // County Enrichment
+            const enrichment = data.cleaned_data.county_enrichment;
+            if (enrichment && enrichment.fips_code) {
+                // Color-code match type
+                const matchColors = {
+                    'exact': 'var(--accent)',
+                    'abbreviation_expansion': '#00ccff',
+                    'ai_variation': '#a855f7',
+                    'ai_variation_expanded': '#a855f7',
+                    'fuzzy': 'var(--warning)'
+                };
+                const matchColor = matchColors[enrichment.fips_match_type] || 'var(--text-secondary)';
+                const matchLabel = {
+                    'exact': '✓ Exact Match',
+                    'abbreviation_expansion': '🔤 Abbreviation Expanded',
+                    'ai_variation': '🤖 AI Variation',
+                    'ai_variation_expanded': '🤖+🔤 AI + Abbreviation',
+                    'fuzzy': '🔍 Fuzzy Match'
+                }[enrichment.fips_match_type] || enrichment.fips_match_type;
+                
+                html += `
+                    <div class="result-section">
+                        <div class="result-section-title">🗺️ County Enrichment</div>
+                        <div class="result-field">
+                            <span class="field-key">Input County</span>
+                            <span class="field-value">${enrichment.county}, ${enrichment.state}</span>
+                        </div>
+                        <div class="result-field">
+                            <span class="field-key">Matched As</span>
+                            <span class="field-value" style="color: ${matchColor};">${enrichment.fips_matched_name || enrichment.county}</span>
+                        </div>
+                        <div class="result-field">
+                            <span class="field-key">FIPS Code</span>
+                            <span class="field-value" style="color: var(--accent); font-weight: bold;">${enrichment.fips_code}</span>
+                        </div>
+                        <div class="result-field">
+                            <span class="field-key">Match Strategy</span>
+                            <span class="field-value" style="color: ${matchColor};">${matchLabel}${enrichment.fips_match_score ? ' (' + enrichment.fips_match_score + '%)' : ''}</span>
+                        </div>
+                        <div class="result-field">
+                            <span class="field-key">Tax Rate</span>
+                            <span class="field-value" style="color: var(--accent);">${enrichment.tax_rate ? (enrichment.tax_rate * 100).toFixed(2) + '%' : 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Extracted Fields
+            const fields = data.cleaned_data.extracted_fields;
+            html += `<div class="result-section"><div class="result-section-title">📋 Extracted Fields</div>`;
+            for (const [key, value] of Object.entries(fields)) {
+                if (!key.startsWith('amount_') || key === 'amount_numeric') {
+                    html += `
+                        <div class="result-field">
+                            <span class="field-key">${key}</span>
+                            <span class="field-value">${value}</span>
+                        </div>
+                    `;
+                }
+            }
+            html += '</div>';
+            
+            // Errors
+            if (data.validation.errors.length > 0) {
+                html += `<div class="result-section"><div class="result-section-title">🚨 Validation Errors</div>`;
+                for (const error of data.validation.errors) {
+                    html += `<div class="error-item">${error}</div>`;
+                }
+                html += '</div>';
+            }
+            
+            // Warnings
+            if (data.validation.warnings.length > 0) {
+                html += `<div class="result-section"><div class="result-section-title">⚠️ Warnings</div>`;
+                for (const warning of data.validation.warnings) {
+                    html += `<div class="warning-item">${warning}</div>`;
+                }
+                html += '</div>';
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        // Load stats on page load
+        loadStats();
+    </script>
+</body>
+</html>
+"""
